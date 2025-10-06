@@ -290,12 +290,14 @@ namespace WaveHarmonic.Crest
 
         bool GetWriteToColorTexture()
         {
-            return (_WriteToColorTexture && RenderBeforeTransparency) || Meniscus.RequiresOpaqueTexture;
+            // return (_WriteToColorTexture && RenderBeforeTransparency) || Meniscus.RequiresOpaqueTexture;
+            return false;
         }
 
         bool GetWriteToDepthTexture()
         {
-            return _WriteToDepthTexture && Surface.Enabled;
+            // return _WriteToDepthTexture && Surface.Enabled;
+            return false;
         }
 
         internal static bool ShouldRender(Camera camera)
@@ -946,7 +948,7 @@ namespace WaveHarmonic.Crest
             // Always execute after surface.
             if (RenderPipelineHelper.IsUniversal)
             {
-                CopyTargetsRenderPass.Instance.OnBeginCameraRendering(context, camera);
+                // CopyTargetsRenderPass.Instance.OnBeginCameraRendering(context, camera);
             }
             else
 #endif

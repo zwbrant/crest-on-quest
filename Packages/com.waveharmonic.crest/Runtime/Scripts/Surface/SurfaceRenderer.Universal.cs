@@ -26,7 +26,7 @@ namespace WaveHarmonic.Crest
                 renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
 
                 // Copy color happens between "after skybox" and "before transparency".
-                ConfigureInput(ScriptableRenderPassInput.Color | ScriptableRenderPassInput.Depth);
+                // ConfigureInput(ScriptableRenderPassInput.Color | ScriptableRenderPassInput.Depth);
             }
 
             public static void Enable(WaterRenderer water)
