@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 658fd36f8e39129479a0b3406514adc1
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 625f186215c104763be7675aa2d941aa, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 276973
+  packageName: Crest Water 5 - Paint
+  packageVersion: 1.2.3
+  assetPath: Packages/com.waveharmonic.crest.paint/Samples~/Colorado/Shaders/Environment
+    (Splat Map).shadergraph
+  uploadId: 784810

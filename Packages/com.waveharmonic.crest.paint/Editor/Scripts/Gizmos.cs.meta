@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 65c208529f6234913b607c6e5a9e4ee0
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 276973
+  packageName: Crest Water 5 - Paint
+  packageVersion: 1.2.3
+  assetPath: Packages/com.waveharmonic.crest.paint/Editor/Scripts/Gizmos.cs
+  uploadId: 784810

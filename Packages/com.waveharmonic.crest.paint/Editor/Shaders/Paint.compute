@@ -1,0 +1,282 @@
+// NOTE:
+// - everything is uploaded in pixel space.
+
+#pragma kernel CrestAdd
+#pragma kernel CrestInterpolate
+#pragma kernel CrestSaturate
+#pragma kernel CrestSaturate2
+#pragma kernel CrestTowards
+#pragma kernel CrestTowards2
+
+// @Versioning: _V1 will be a keyword for versioning purposes.
+// #pragma kernel Interpolate_V1 _V1
+// #pragma kernel TowardsZero2_V1 _V1
+
+#include "Packages/com.waveharmonic.crest/Runtime/Shaders/Library/Macros.hlsl"
+
+// #include "HLSLSupport.cginc"
+
+m_CrestNameSpace
+
+struct StrokePoint
+{
+    float4 _Position; // f2 position + f2 padding
+    float4 _Value;
+};
+
+m_CrestNameSpaceEnd
+
+// TODO?: Use macros? They didn't seem to work.
+cbuffer _Properties
+{
+    float _BrushRadius;
+    float _BrushWeight;
+    float2 _Padding;
+}
+
+RWTexture2D<float4> _Canvas;
+StructuredBuffer<m_Crest::StrokePoint> _Stroke;
+int _StrokeLength;
+
+m_CrestNameSpace
+
+bool IsWithinBrushAABB(const float2 i_pixelPosition, const float2 i_position0, const float2 i_position1)
+{
+    return
+        i_pixelPosition.x >= min(i_position0.x, i_position1.x) - _BrushRadius &&
+        i_pixelPosition.x <= max(i_position0.x, i_position1.x) + _BrushRadius &&
+        i_pixelPosition.y >= min(i_position0.y, i_position1.y) - _BrushRadius &&
+        i_pixelPosition.y <= max(i_position0.y, i_position1.y) + _BrushRadius;
+}
+
+bool IsWithinBrushRadius(float2 pixelPosition, float brushSize2, float2 brushPosition)
+{
+    const float2 direction = pixelPosition - brushPosition;
+    return dot(direction, direction) < brushSize2;
+}
+
+float2 MoveTowards(const float2 current, const float2 target, const float maxDistanceDelta)
+{
+    float2 direction = target - current;
+    float sqDist = direction.x * direction.x + direction.y * direction.y;
+
+    if (sqDist == 0.0 || (sqDist <= (maxDistanceDelta * maxDistanceDelta)))
+    {
+        return target;
+    }
+    else
+    {
+        float dist = sqrt(sqDist);
+
+        return float2
+        (
+            current.x + direction.x / dist * maxDistanceDelta,
+            current.y + direction.y / dist * maxDistanceDelta
+        );
+    }
+}
+
+float MoveTowards(float current, const float target, const float delta)
+{
+    if (current > target)
+    {
+        // Reduce but don't go below target
+        current = max(current - delta, target);
+    }
+    else if (current < target)
+    {
+        // Increase but don't go above target
+        current = min(current + delta, target);
+    }
+
+    return current;
+}
+
+interface IBlend
+{
+    float4 Blend(float4 existingValue, float4 paintValue, float weight);
+};
+
+class PaintAdd : IBlend
+{
+    float4 Blend(float4 existingValue, float4 paintValue, float weight)
+    {
+        return existingValue + paintValue * weight;
+    }
+};
+
+class PaintTowards : IBlend
+{
+    float4 Blend(float4 existingValue, float4 paintValue, float weight)
+    {
+        float2 r = MoveTowards(existingValue.x, paintValue.x, weight);
+        return float4(r.x, 0, 0, 0);
+    }
+};
+
+class PaintTowards2 : IBlend
+{
+    float4 Blend(float4 existingValue, float4 paintValue, float weight)
+    {
+        float2 r = MoveTowards(existingValue.xy, paintValue.xy, weight);
+        return float4(r.x, r.y, 0, 0);
+    }
+};
+
+class PaintInterpolate : IBlend
+{
+    float4 Blend(float4 existingValue, float4 paintValue, float weight)
+    {
+        return lerp(existingValue, paintValue, saturate(weight));
+    }
+};
+
+class PaintSaturate : IBlend
+{
+    float4 Blend(float4 existingValue, float4 paintValue, float weight)
+    {
+        return saturate(existingValue + paintValue * weight);
+    }
+};
+
+class PaintSaturate2 : IBlend
+{
+    float4 Blend(float4 existingValue, float4 paintValue, float weight)
+    {
+        float2 result = (existingValue + paintValue * weight).xy;
+
+        // 'Saturate' - clamp length to 1. Oddly, this seems less predictable/more prone to warping, and perhaps more difficult to manage.
+        // It may be wise to apply some kind of downward pressure to size though.
+        float len2 = dot(result, result);
+        if (len2 > 1.0)
+        {
+            result /= sqrt(len2);
+        }
+
+        return float4(result, 0, 0);
+    }
+};
+
+bool PaintInternal
+(
+    in const float2 positionSS,
+    in const float2 position,
+    in const float brushSize2,
+    in const float4 brushColor,
+    in const IBlend blend,
+    inout float4 data
+)
+{
+    bool hasWritten = false;
+
+    if (IsWithinBrushRadius(positionSS, brushSize2, position))
+    {
+        // @Versioning
+        float xn = (positionSS.x - position.x) / _BrushRadius;
+        float yn = (positionSS.y - position.y) / _BrushRadius;
+        float alpha = sqrt(xn * xn + yn * yn);
+        float weight = smoothstep(1, 0, alpha);
+        data = blend.Blend(data, brushColor, _BrushWeight * weight);
+        hasWritten = true;
+    }
+
+    return hasWritten;
+}
+
+// TODO: Pass everything in?
+// General purpose linearly interpolated paint operation.
+void PaintLinear(uint3 id, IBlend blend)
+{
+    float2 positionSS = (float2)id;
+    float4 data = _Canvas[id.xy];
+    float brushRadius2 = _BrushRadius * _BrushRadius;
+    // @Versioning?
+    float maxDistanceDelta = _BrushRadius * 0.5;
+    float maxDistanceDelta2 = maxDistanceDelta * maxDistanceDelta;
+    bool hasWritten = false;
+
+    // TODO: IsWithinStrokeAABB?
+    // We would need to upload the AABB to be of any benefit.
+
+    if (_StrokeLength == 1)
+    {
+        float2 p1 = _Stroke[0]._Position.xy;
+        float4 brushColor = _Stroke[0]._Value;
+        hasWritten = PaintInternal(positionSS, p1, brushRadius2, brushColor, blend, data);
+    }
+    else
+    {
+        float2 p1 = _Stroke[0]._Position.xy;
+        // Check if pixel is within stroke bounds.
+        for (int i = 0; i < _StrokeLength - 1; i++)
+        {
+            const float2 p2 = _Stroke[i + 1]._Position.xy;
+
+            if (IsWithinBrushAABB(positionSS, p1, p2))
+            {
+                // The segment value is stored at the destination.
+                float4 brushColor = _Stroke[i + 1]._Value;
+
+                bool notDone = true;
+
+                [loop]
+                while (notDone)
+                {
+                    hasWritten = PaintInternal(positionSS, p1, brushRadius2, brushColor, blend, data) || hasWritten;
+
+                    float2 direction = p2 - p1;
+                    float sqDist = direction.x * direction.x + direction.y * direction.y;
+
+                    // Optimized MoveTowards.
+                    {
+                        // We are at or beyond the target.
+                        if (sqDist <= maxDistanceDelta2)
+                        {
+                            p1 = p2;
+                            // TODO?: For the very last point in a stroke we shouldn't. We may need to add a final point.
+                            // Skipping the last position to avoid overlaps.
+                            notDone = false;
+                        }
+                        else
+                        {
+                            float dist = sqrt(sqDist);
+                            p1.x += (direction.x / dist * maxDistanceDelta);
+                            p1.y += (direction.y / dist * maxDistanceDelta);
+                        }
+                    }
+                }
+            }
+
+            p1 = p2;
+        }
+    }
+
+    if (hasWritten)
+    {
+        _Canvas[id.xy] = data;
+    }
+}
+
+// void Kernel_V2(uint3 id)
+// {
+//     Paint_V2 blend;
+//     PaintLinear_V2(id, blend);
+// }
+
+m_CrestNameSpaceEnd
+
+
+#define m_CrestKernelPaint(name) \
+[numthreads(8, 8, 1)] \
+void Crest##name(uint3 id : SV_DispatchThreadID) \
+{ \
+    m_Crest::Paint##name blend; \
+    m_Crest::PaintLinear(id, blend); \
+}
+
+m_CrestKernelPaint(Add)
+m_CrestKernelPaint(Interpolate)
+m_CrestKernelPaint(Saturate)
+m_CrestKernelPaint(Saturate2)
+m_CrestKernelPaint(Towards)
+m_CrestKernelPaint(Towards2)

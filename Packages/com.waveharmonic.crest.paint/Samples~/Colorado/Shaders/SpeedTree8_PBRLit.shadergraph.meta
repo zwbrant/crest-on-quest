@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 2b251c332962444c1b6fd4a2ad236e03
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 625f186215c104763be7675aa2d941aa, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 276973
+  packageName: Crest Water 5 - Paint
+  packageVersion: 1.2.3
+  assetPath: Packages/com.waveharmonic.crest.paint/Samples~/Colorado/Shaders/SpeedTree8_PBRLit.shadergraph
+  uploadId: 784810

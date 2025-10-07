@@ -1,0 +1,25 @@
+{
+  "name": "com.waveharmonic.crest.paint",
+  "version": "1.2.3",
+  "displayName": "Crest - Paint",
+  "description": "Painting tools for Crest Water.",
+  "unity": "2022.3",
+  "hideInEditor": false,
+  "documentationUrl": "https://docs.crest.waveharmonic.com/Packages/Paint/Introduction.html",
+  "changelogUrl": "https://docs.crest.waveharmonic.com/Packages/Paint/History.html",
+  "author": {
+    "name": "Wave Harmonic",
+    "email": "support@waveharmonic.com",
+    "url": "https://waveharmonic.com/"
+  },
+  "dependencies": {
+    "com.waveharmonic.crest": "5.6.0"
+  },
+  "samples": [
+    {
+      "displayName": "Colorado",
+      "description": "Colorado scene with a painted river.",
+      "path": "Samples~/Colorado"
+    }
+  ]
+}

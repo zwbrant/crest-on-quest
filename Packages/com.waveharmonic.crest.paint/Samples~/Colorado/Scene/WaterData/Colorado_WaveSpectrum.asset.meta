@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d9c35deeba8377c4e97fbc1d0089abef
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 276973
+  packageName: Crest Water 5 - Paint
+  packageVersion: 1.2.3
+  assetPath: Packages/com.waveharmonic.crest.paint/Samples~/Colorado/Scene/WaterData/Colorado_WaveSpectrum.asset
+  uploadId: 784810

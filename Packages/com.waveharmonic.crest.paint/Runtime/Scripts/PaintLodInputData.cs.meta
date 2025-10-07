@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: e0deb01503cbcd843b1d3585ad82daa9
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 276973
+  packageName: Crest Water 5 - Paint
+  packageVersion: 1.2.3
+  assetPath: Packages/com.waveharmonic.crest.paint/Runtime/Scripts/PaintLodInputData.cs
+  uploadId: 784810

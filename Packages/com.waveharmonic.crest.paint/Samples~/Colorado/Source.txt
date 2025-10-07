@@ -1,0 +1,4 @@
+Colorado Scene
+The Digital Wizards team by Aldana Zanetta and Fernando Zanetta
+River painted by Huw Bowles
+Modifications: Made compatible with all render pipelines (originally URP only) and other minor changes.
